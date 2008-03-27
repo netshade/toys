@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+MERB_ROOT = "/w/indycentral/"
+PID_PATH = "/var/run/rails/indycentral/pen.pid"
+AS_USER = "apache"
+AS_GROUP = "apache"
+LIL_MERBS = 10
+ROOT_PORT = 10700
+APP_NAME  = File.basename(__FILE__) 
+
+merb_path = `which merb`.chomp
+pen_path = `which pen`.chomp
+pen_ctl_path = `which penctl`.chomp
+pen_addrs = ((ROOT_PORT+1)..(ROOT_PORT+LIL_MERBS)).collect { |p| "127.0.0.1:#{p}" }.join(" ")
+merb_start_cmd = "cd #{MERB_ROOT};#{merb_path} -p #{ROOT_PORT+1} -c #{LIL_MERBS} --user #{AS_USER} --group #{AS_GROUP}"
+merb_stop_cmd = "cd #{MERB_ROOT};script/stop_merb"
+pen_start_cmd = "#{pen_path} -r -X -p #{PID_PATH} -u #{AS_USER} #{ROOT_PORT} #{pen_addrs}"
+pen_stop_cmd = "#{pen_ctl_path} 127.0.0.1:#{ROOT_PORT} exit"
+first = ARGV.first
+case first
+when "start"
+ `#{merb_start_cmd}`
+ `#{pen_start_cmd}`
+when "stop"
+ `#{merb_stop_cmd}`
+ `#{pen_stop_cmd}`
+end
+
+unless %w{start stop}.include? first
+   puts "Usage: #{APP_NAME} {start|stop}"
+   exit
+end
+
